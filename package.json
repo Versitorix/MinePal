@@ -33,6 +33,7 @@
   "scripts": {
     "postinstall": "patch-package",
     "start": "electron .",
+    "start:local": "electron .",
     "clean": "rm -rf dist",
     "buildLocal": "npm run clean && electron-builder",
     "build:mac": "electron-builder --mac",
