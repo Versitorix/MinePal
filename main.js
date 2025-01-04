@@ -2,7 +2,7 @@ import fs from 'fs';
 import { promisify } from 'util';
 import { app, BrowserWindow, systemPreferences } from 'electron';
 import path from 'path';
-import { startServer } from './server.js';
+import { startServer } from './server.ts';
 import { createStream } from 'rotating-file-stream';
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
@@ -19,7 +19,7 @@ const access = promisify(fs.access);
 
 let mainWindow;
 
-const DEV = false;
+const DEV = !!process.env.DEV;
 const DEBUG = false;
 
 const logDirectory = app.getPath('userData');
@@ -83,58 +83,58 @@ function createWindow() {
 const gotTheLock = app.requestSingleInstanceLock();
 
 if (!gotTheLock) {
-  app.quit();
+    app.quit();
 } else {
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
-  });
-
-  app.on('ready', async () => {
-    createWindow(); // Create the window first
-    logToFile(`Platform: ${process.platform}`);
-    if (process.platform === 'darwin') { // Check if the platform is macOS
-        try {
-            const micAccess = await systemPreferences.askForMediaAccess('microphone');
-            if (micAccess) {
-                logToFile("Microphone access granted");
-            }
-        } catch (error) {
-            logToFile("Failed to request microphone access: " + error);
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
         }
-    }
-    try {
-        startServer();
-    } catch (error) {
-        logToFile("Failed to start server: " + error);
-    }
-    await checkAndCopyProfile(); // Check and copy profile
-    autoUpdater.checkForUpdatesAndNotify();
-  });
+    });
 
-  autoUpdater.on('error', (err) => {
-    logToFile('Error in auto-updater. ' + err);
-  })
-  autoUpdater.on('download-progress', (progressObj) => {
-    let log_message = "Download speed: " + progressObj.bytesPerSecond;
-    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
-    logToFile(log_message);
-  })
-  autoUpdater.on('update-available', () => {
-    logToFile('Update available.');
-  });
+    app.on('ready', async () => {
+        createWindow(); // Create the window first
+        logToFile(`Platform: ${process.platform}`);
+        if (process.platform === 'darwin') { // Check if the platform is macOS
+            try {
+                const micAccess = await systemPreferences.askForMediaAccess('microphone');
+                if (micAccess) {
+                    logToFile("Microphone access granted");
+                }
+            } catch (error) {
+                logToFile("Failed to request microphone access: " + error);
+            }
+        }
+        try {
+            startServer();
+        } catch (error) {
+            logToFile("Failed to start server: " + error);
+        }
+        await checkAndCopyProfile(); // Check and copy profile
+        autoUpdater.checkForUpdatesAndNotify();
+    });
 
-  autoUpdater.on('update-not-available', () => {
-    logToFile('No update available.');
-  });
+    autoUpdater.on('error', (err) => {
+        logToFile('Error in auto-updater. ' + err);
+    })
+    autoUpdater.on('download-progress', (progressObj) => {
+        let log_message = "Download speed: " + progressObj.bytesPerSecond;
+        log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+        log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+        logToFile(log_message);
+    })
+    autoUpdater.on('update-available', () => {
+        logToFile('Update available.');
+    });
 
-  autoUpdater.on('update-downloaded', () => {
-    logToFile('Update downloaded; will install now');
-    autoUpdater.quitAndInstall();
-  });
+    autoUpdater.on('update-not-available', () => {
+        logToFile('No update available.');
+    });
+
+    autoUpdater.on('update-downloaded', () => {
+        logToFile('Update downloaded; will install now');
+        autoUpdater.quitAndInstall();
+    });
 }
 
 app.on('window-all-closed', function () {

@@ -1,24 +1,10 @@
-import { useState, useEffect } from 'react';
 import { Radio } from "react-feather";
 import './Announcement.css';
-import { useErrorReport } from '../contexts/ErrorReportContext/ErrorReportContext';
 import { getAnnouncements } from '../utils/api';
+import useWebRequest from '../hooks/useWebRequest';
 
 function Announcement() {
-  const [announcement, setAnnouncement] = useState('');
-  const { declareError } = useErrorReport();
-
-  useEffect(() => {
-    const fetchAnnouncement = async () => {
-      try {
-        setAnnouncement(await getAnnouncements());
-      } catch (error) {
-        declareError("Announcement", error);
-      }
-    };
-
-    fetchAnnouncement();
-  }, [declareError]);
+  const { data: announcement } = useWebRequest("/announcements", getAnnouncements)
 
   if (!announcement) return null;
 

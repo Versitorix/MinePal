@@ -9,18 +9,23 @@ import cors from 'cors';
 import path from 'path';
 import net from 'net';
 import { GlobalKeyboardListener } from 'node-global-key-listener';
+import DeepgramFacade from './src/deepgram/DeepgramFacade.js';
+import DeepgramLocal from './src/deepgram/local.js';
+import DeepgramProxy from './src/deepgram/proxy.js';
 
 const logFile = path.join(electronApp.getPath('userData'), 'app.log');
 const logStream = fs.createWriteStream(logFile, { flags: 'a' });
 
-let wss; // Declare wss in the outer scope
+let wss: WebSocketServer; // Declare wss in the outer scope
 let isToggleToTalkActive = false; // Global state for toggle_to_talk
 let isKeyDown = false; // Track key state
 let gkl; // Declare the global keyboard listener
 let voice_mode = 'off'; // Global voice_mode variable with default value
 
-function logToFile(message) {
-    logStream.write(`${new Date().toISOString()} - ${message}\n`);
+function logToFile(message: string) {
+    const datedMessage = `${new Date().toISOString()} - ${message}`;
+    console.log(datedMessage);
+    logStream.write(`${datedMessage}\n`);
 }
 
 function broadcastMessage(message) {
@@ -100,7 +105,7 @@ function startServer() {
     let profiles = settings.profiles;
     let load_memory = settings.load_memory;
     let agentProcessStarted = false;
-    let agentProcesses = [];
+    let agentProcesses: AgentProcess[] = [];
 
     const app = express();
     const port = 10101;
@@ -131,25 +136,23 @@ function startServer() {
 
     wss.on("connection", (ws) => {
         logToFile("socket: client connected");
-        const proxyWs = new WebSocket(`${WSS_BACKEND_URL}?language=${settings.language}`);
-        
         // Update settings
         settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
         voice_mode = settings.voice_mode;
+        const deepgramClient: DeepgramFacade = settings.use_own_deepgram_api_key && settings.deepgram_api_key ? new DeepgramLocal(settings) : new DeepgramProxy(settings);
         setupVoice(settings);
 
-        proxyWs.on('open', () => {
+        deepgramClient.on('connect', () => {
             logToFile(`proxy: connected to ${WSS_BACKEND_URL}`);
         });
 
-        proxyWs.on('message', (message) => {
+        deepgramClient.on('transcript', (data) => {
             // console.log(`Voice Mode: ${settings.voice_mode}, isKeyDown: ${isKeyDown}, isToggleToTalkActive: ${isToggleToTalkActive}`);
-            if (voice_mode === 'always_on' || 
-                (voice_mode === 'push_to_talk' && isKeyDown) || 
+            if (voice_mode === 'always_on' ||
+                (voice_mode === 'push_to_talk' && isKeyDown) ||
                 (voice_mode === 'toggle_to_talk' && isToggleToTalkActive)) {
 
-                const parsedMessage = JSON.parse(message.toString('utf8'));
-                const { is_final, speech_final, transcript } = parsedMessage;
+                const { is_final, speech_final, transcript } = data || {};
 
                 if (is_final) {
                     transcriptBuffer += transcript;
@@ -167,28 +170,30 @@ function startServer() {
             }
         });
 
-        proxyWs.on('close', () => {
+        deepgramClient.on('close', () => {
             logToFile(`proxy: connection to ${WSS_BACKEND_URL} closed`);
             ws.close();
         });
 
-        proxyWs.on('error', (error) => {
+        deepgramClient.on('error', (error) => {
             logToFile(`proxy: error ${error}`);
             ws.close();
         });
 
-        ws.on("message", (message) => {
-            if (proxyWs.readyState === WebSocket.OPEN) {
-                proxyWs.send(message);
+        ws.on("message", (message, isBinary) => {
+            if (isBinary) {
+                deepgramClient.send(message);
             } else {
-                logToFile("socket: data couldn't be sent to proxy");
+                logToFile(`WebSocket - received wacky weird data that isn't binary: ${message}`);
             }
         });
 
         ws.on("close", () => {
             logToFile("socket: client disconnected");
-            proxyWs.close();
+            deepgramClient.close();
         });
+
+        deepgramClient.connect();
     });
 
     app.get('/backend-alive', async (req, res) => {
@@ -210,20 +215,20 @@ function startServer() {
         const updatedProfiles = [];
         const ethanTemplatePath = path.join(electronApp.getAppPath(), 'ethan.json');
         const ethanTemplate = JSON.parse(fs.readFileSync(ethanTemplatePath, 'utf8'));
-    
+
         fs.readdirSync(profilesDir).forEach(file => {
             if (file.endsWith('.json')) {
                 const profilePath = path.join(profilesDir, file);
                 const profileData = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
-                
+
                 // Replace fields with those from ethanTemplate
                 profileData.conversing = ethanTemplate.conversing;
                 profileData.coding = ethanTemplate.coding;
                 profileData.saving_memory = ethanTemplate.saving_memory;
-                
+
                 // Write the updated profile back to the file
                 fs.writeFileSync(profilePath, JSON.stringify(profileData, null, 4));
-                
+
                 updatedProfiles.push({
                     name: profileData.name,
                     personality: profileData.personality,
@@ -233,12 +238,12 @@ function startServer() {
                 });
             }
         });
-    
+
         const updatedSettings = {
             ...settings,
             profiles: updatedProfiles
         };
-    
+
         fs.writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 4));
         res.json(updatedSettings);
     });
@@ -246,9 +251,9 @@ function startServer() {
     app.get('/check-server', (req, res) => {
         const { host, port } = req.query;
         const socket = new net.Socket();
-    
+
         socket.setTimeout(2000); // Set a timeout for the connection
-    
+
         socket.on('connect', () => {
             logToFile(`Server at ${host}:${port} is reachable.`);
             res.json({ alive: true });
@@ -328,7 +333,7 @@ function startServer() {
                 return value === "" || value === null || value === undefined;
             })
             .map(([key]) => key);
-        
+
         if (emptyFields.length > 0) {
             return res.status(400).json({
                 error: "Empty fields not allowed",

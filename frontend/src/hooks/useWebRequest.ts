@@ -9,12 +9,12 @@ export default function useWebRequest<T>(key: string | string[], fetcher: () => 
 
   const [isLoading, setIsLoading] = useState(!store[truekey]);
   const [isRefetching, setIsRefetching] = useState(false);
-  const [data, setData] = useState<T>(store[truekey] as T);
+  const [data, setData] = useState<T | undefined>(store[truekey] as T);
   const [error, setError] = useState<unknown>();
 
   const getData = useCallback(async () => {
     try {
-      const data = await fetcher()
+      const data = await fetcher();
       setData(data);
       store[truekey] = data;
 

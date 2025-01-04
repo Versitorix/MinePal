@@ -7,6 +7,7 @@
   "author": "NemosAI",
   "license": "MIT",
   "dependencies": {
+    "@deepgram/sdk": "^3.9.0",
     "@supabase/supabase-js": "^2.46.2",
     "axios": "^1.7.3",
     "cors": "^2.8.5",
@@ -33,6 +34,7 @@
   "scripts": {
     "postinstall": "patch-package",
     "start": "electron .",
+    "start:dev": "DEV=true electron .",
     "clean": "rm -rf dist",
     "buildLocal": "npm run clean && electron-builder",
     "build:mac": "electron-builder --mac",
@@ -40,6 +42,7 @@
   },
   "devDependencies": {
     "@electron/notarize": "^2.3.2",
+    "@types/express": "^5.0.0",
     "electron": "^31.3.1",
     "electron-builder": "^24.13.3"
   },
@@ -54,7 +57,7 @@
       "dist/**/*",
       "node_modules/**/*",
       "main.js",
-      "server.js",
+      "server.ts",
       "ethan.json",
       "src/**/*",
       "frontend/dist/**/*",
@@ -84,5 +87,6 @@
       "target": "AppImage",
       "icon": "build"
     }
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
