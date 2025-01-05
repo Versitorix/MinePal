@@ -20,7 +20,7 @@ export default function RouterProvider({ initialRoute = "/", children }: RouterP
 
       return restHistory;
     });
-  }, [])
+  }, []);
 
   return (
     <RouterContext.Provider value={{ location: history[0], to, back }}>

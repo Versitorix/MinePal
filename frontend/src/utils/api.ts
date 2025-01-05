@@ -40,6 +40,8 @@ export async function fetchSettings() {
     "openai_api_key",
     "model",
     "useOwnApiKey",
+    "use_own_deepgram_api_key",
+    "deepgram_api_key",
   ];
 
   const filteredSettings = expectedFields.reduce<UserSettings>((acc, fieldName) => ({

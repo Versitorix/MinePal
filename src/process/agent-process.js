@@ -10,6 +10,7 @@ const logStream = createStream('app.log', {
 });
 
 function logToFile(message) {
+    console.log(`${new Date().toISOString()} - ${message}`);
     logStream.write(`${new Date().toISOString()} - ${message}\n`);
 }
 
@@ -31,7 +32,7 @@ export class AgentProcess {
      * @param {string} userDataDir - The directory to store log files.
      * @param {boolean} [load_memory=false] - Whether to load memory from a previous session.
      */
-    start(profile, userDataDir, useOwnApiKey, openai_api_key, load_memory=false) {
+    start(profile, userDataDir, useOwnApiKey, openai_api_key, load_memory = false) {
         this.botName = profile;
         // Prepare arguments for the agent process
         let args = [path.join(app.getAppPath(), 'src/process/init-agent.js')]; // Adjust path
@@ -114,7 +115,7 @@ export class AgentProcess {
                 this.start(profile, userDataDir, useOwnApiKey, openai_api_key, true, 'Agent process restarted.');
             }
         });
-    
+
         this.agentProcess.on('error', (err) => {
             logToFile(`Failed to start agent process: ${err}\n${err.stack}`);
             if (!agentLogStream.destroyed) {

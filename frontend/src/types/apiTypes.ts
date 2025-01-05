@@ -25,4 +25,6 @@ export type UserSettings = {
   openai_api_key: string;
   model: string;
   useOwnApiKey: boolean;
+  use_own_deepgram_api_key: boolean;
+  deepgram_api_key?: string;
 };
