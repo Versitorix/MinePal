@@ -96,6 +96,10 @@ export default function AudioActions() {
     };
   }, [getDeviceMediaRecorder, isMicrophoneActive]);
 
+  useEffect(() => {
+    setIsMicrophoneActive(agentActive);
+  }, [agentActive]);
+
   return (
     <>
       <div className="voice-settings">

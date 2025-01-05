@@ -25,8 +25,8 @@ export default function Settings() {
     updateField("model", value);
   };
 
-  const handleUseDeepgramApiKeyChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
-    updateField("use_own_deepgram_api_key", value);
+  const handleUseDeepgramApiKeyChange = ({ target: { checked } }: React.ChangeEvent<HTMLInputElement>) => {
+    updateField("use_own_deepgram_api_key", checked);
   };
 
   const handleDeepgramApiKeyChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {

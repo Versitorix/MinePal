@@ -10,7 +10,7 @@ export type DeepgramTranscriptData = {
 }
 
 export default abstract class DeepgramFacade {
-  private listeners: Record<DeepgramFacadeEvents, Callback[] | undefined>;
+  private listeners: Record<DeepgramFacadeEvents, Callback[]>;
 
   protected deepgramAPIKey?: string
   protected language: string
@@ -18,6 +18,12 @@ export default abstract class DeepgramFacade {
   constructor(settings: { deepgram_api_key?: string, language: string }) {
     this.deepgramAPIKey = settings.deepgram_api_key;
     this.language = settings.language;
+    this.listeners = {
+      close: [],
+      connect: [],
+      error: [],
+      transcript: [],
+    };
   }
 
   abstract connect(): void;
@@ -39,12 +45,7 @@ export default abstract class DeepgramFacade {
   on(eventType: "close", callback: Callback<void>): Callback<void>
   on(eventType: "error", callback: Callback<Error>): Callback<Error>
   on(eventType: DeepgramFacadeEvents, callback: Callback<any>): Callback<any> {
-    if (this.listeners[eventType]) {
-      this.listeners[eventType].push(callback);
-    } else {
-      this.listeners[eventType] = [callback];
-    }
-
+    this.listeners[eventType].push(callback);
     return callback
   }
 
