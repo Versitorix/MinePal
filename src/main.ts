@@ -2,7 +2,7 @@ import fs from 'fs';
 import { promisify } from 'util';
 import { app, BrowserWindow, systemPreferences } from 'electron';
 import path from 'path';
-import { startServer } from './server.ts';
+import { startServer } from './server';
 import { createStream } from 'rotating-file-stream';
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
@@ -17,7 +17,7 @@ const copyFile = promisify(fs.copyFile);
 const mkdir = promisify(fs.mkdir);
 const access = promisify(fs.access);
 
-let mainWindow;
+let mainWindow: BrowserWindow;
 
 const DEV = !!process.env.DEV;
 const DEBUG = false;
@@ -28,7 +28,7 @@ const logStream = createStream('app.log', {
     path: logDirectory
 });
 
-function logToFile(message) {
+function logToFile(message: string) {
     logStream.write(`${new Date().toISOString()} - ${message}\n`);
 }
 

@@ -2,15 +2,16 @@
   "name": "minepal",
   "version": "0.3.8",
   "description": "AI minecraft friend",
-  "type": "module",
-  "main": "main.js",
+  "main": ".vite/build/main.js",
   "author": "NemosAI",
   "license": "MIT",
   "dependencies": {
     "@deepgram/sdk": "^3.9.0",
     "@supabase/supabase-js": "^2.46.2",
     "axios": "^1.7.3",
+    "bufferutil": "4.x.x",
     "cors": "^2.8.5",
+    "electron-squirrel-startup": "^1.0.1",
     "electron-updater": "^6.3.9",
     "express": "^4.19.2",
     "lowdb": "^7.0.1",
@@ -28,65 +29,45 @@
     "pidusage": "^3.0.2",
     "prismarine-item": "^1.14.0",
     "rotating-file-stream": "^3.2.3",
+    "utf-8-validate": "5.x.x",
     "ws": "^8.18.0",
     "yargs": "^17.7.2"
   },
+  "imports": {
+    "#types/*": "./types/*"
+  },
   "scripts": {
-    "postinstall": "patch-package",
-    "start": "electron .",
-    "start:dev": "DEV=true electron .",
+    "start": "electron-forge start",
+    "start:dev": "DEV=true electron-forge start",
     "clean": "rm -rf dist",
-    "buildLocal": "npm run clean && electron-builder",
-    "build:mac": "electron-builder --mac",
-    "build:win": "electron-builder --win"
+    "package": "electron-forge package",
+    "publish": "electron-forge publish",
+    "make": "electron-forge make",
+    "lint": "eslint --ext .ts,.tsx ."
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.6.0",
+    "@electron-forge/maker-deb": "^7.6.0",
+    "@electron-forge/maker-rpm": "^7.6.0",
+    "@electron-forge/maker-squirrel": "^7.6.0",
+    "@electron-forge/maker-zip": "^7.6.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.6.0",
+    "@electron-forge/plugin-fuses": "^7.6.0",
+    "@electron-forge/plugin-vite": "^7.6.0",
+    "@electron-forge/shared-types": "^7.6.0",
+    "@electron/fuses": "^1.8.0",
     "@electron/notarize": "^2.3.2",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
     "electron": "^31.3.1",
-    "electron-builder": "^24.13.3"
-  },
-  "build": {
-    "appId": "com.nemosai.minepal",
-    "productName": "Minepal",
-    "afterSign": "notarize.js",
-    "directories": {
-      "buildResources": "build"
-    },
-    "files": [
-      "dist/**/*",
-      "node_modules/**/*",
-      "main.js",
-      "server.ts",
-      "ethan.json",
-      "src/**/*",
-      "frontend/dist/**/*",
-      "bots/**/*",
-      "mineflayer-pathfinder/**/*",
-      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
-      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!**/node_modules/.bin",
-      "!**/node_modules/*/package-lock.json"
-    ],
-    "mac": {
-      "category": "public.app-category.games",
-      "icon": "build/icon.icns",
-      "entitlements": "build/entitlements.plist",
-      "hardenedRuntime": true,
-      "target": [
-        "default"
-      ]
-    },
-    "win": {
-      "target": [
-        "default"
-      ],
-      "icon": "build/icon.ico"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "build"
-    }
+    "eslint": "^8.0.1",
+    "eslint-plugin-import": "^2.25.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^5.0.12"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

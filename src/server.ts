@@ -1,17 +1,19 @@
-import { AgentProcess } from './src/process/agent-process.js';
+import { AgentProcess } from './process/agent-process';
 import { app as electronApp } from 'electron';
 import express from 'express';
 import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { HTTPS_BACKEND_URL, WSS_BACKEND_URL } from './src/constants.js';
+import { HTTPS_BACKEND_URL, WSS_BACKEND_URL } from './constants';
 import fs from 'fs';
 import cors from 'cors';
 import path from 'path';
 import net from 'net';
 import { GlobalKeyboardListener } from 'node-global-key-listener';
-import DeepgramFacade from './src/deepgram/DeepgramFacade.js';
-import DeepgramLocal from './src/deepgram/local.js';
-import DeepgramProxy from './src/deepgram/proxy.js';
+import DeepgramFacade from './deepgram/DeepgramFacade';
+import DeepgramLocal from './deepgram/local';
+import DeepgramProxy from './deepgram/proxy';
+import { ServerSideUserSettings, UserSettings } from '../types/config';
+import { BotProfile, ServerSideBotProfile } from '#types/botProfile';
 
 const logFile = path.join(electronApp.getPath('userData'), 'app.log');
 const logStream = fs.createWriteStream(logFile, { flags: 'a' });
@@ -28,7 +30,7 @@ function logToFile(message: string) {
     logStream.write(`${datedMessage}\n`);
 }
 
-function broadcastMessage(message) {
+function broadcastMessage(message: any) {
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(message);
@@ -41,7 +43,7 @@ function notifyBotKicked() {
     broadcastMessage("Error: Bot kicked.");
 }
 
-function setupVoice(settings) {
+function setupVoice(settings: UserSettings) {
     voice_mode = settings.voice_mode; // Assign voice_mode from settings
     const { key_binding } = settings;
 
@@ -75,27 +77,27 @@ function startServer() {
     }
 
     const settingsPath = `${userDataDir}/settings.json`;
-    let settings;
+    let settings: ServerSideUserSettings;
 
     if (!fs.existsSync(settingsPath)) {
         settings = {
-            "minecraft_version": "1.20.4",
-            "host": "localhost",
-            "port": "25565",
-            "auth": "offline",
-            "player_username": "",
-            "profiles": [
-                "./ethan.json"
-            ],
-            "load_memory": true,
-            "allow_insecure_coding": false,
-            "code_timeout_mins": 10,
-            "whisper_to_player": false,
-            "voice_mode": "always_on",
-            "key_binding": "",
-            "openai_api_key": "",
-            "model": "",
-            "language": "en"
+            minecraft_version: "1.20.4",
+            host: "localhost",
+            port: 25565,
+            auth: "offline",
+            player_username: "",
+            profiles: [],
+            load_memory: true,
+            allow_insecure_coding: false,
+            code_timeout_mins: 10,
+            whisper_to_player: false,
+            voice_mode: "always_on",
+            key_binding: "",
+            openai_api_key: "",
+            model: "",
+            language: "en",
+            useOwnApiKey: false,
+            use_own_deepgram_api_key: false,
         };
         fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 4));
     } else {
@@ -125,14 +127,6 @@ function startServer() {
     });
 
     let transcriptBuffer = "";
-
-    function broadcastMessage(message) {
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(message);
-            }
-        });
-    }
 
     wss.on("connection", (ws) => {
         logToFile("socket: client connected");
@@ -212,7 +206,7 @@ function startServer() {
 
     app.get('/settings', (req, res) => {
         const profilesDir = path.join(userDataDir, 'profiles');
-        const updatedProfiles = [];
+        const updatedProfiles: ServerSideBotProfile[] = [];
         const ethanTemplatePath = path.join(electronApp.getAppPath(), 'ethan.json');
         const ethanTemplate = JSON.parse(fs.readFileSync(ethanTemplatePath, 'utf8'));
 
@@ -265,7 +259,10 @@ function startServer() {
             logToFile(`Server at ${host}:${port} is not reachable. Error: Timeout`);
             res.json({ alive: false, error: 'Timeout' });
             socket.destroy();
-        }).connect(port, host);
+        }).connect({
+            port: typeof port === "string" ? Number.parseInt(port) : 25565,
+            host: typeof host === "string" ? host : "127.0.0.1"
+        });
     });
 
     app.get('/agent-status', (req, res) => {
@@ -276,7 +273,7 @@ function startServer() {
         logToFile('API: POST /stop called');
         if (!agentProcessStarted) {
             logToFile('API: No agent processes running');
-            return res.status(404).send('No agent processes are currently running.');
+            res.status(404).send('No agent processes are currently running.');
         }
 
         agentProcesses.forEach(agentProcess => {
@@ -294,7 +291,7 @@ function startServer() {
         const { botName, message } = req.body;
 
         if (!botName || !message) {
-            return res.status(400).json({ error: "Both 'botName' and 'message' fields are required." });
+            res.status(400).json({ error: "Both 'botName' and 'message' fields are required." });
         }
 
         let botFound = false;
@@ -317,7 +314,7 @@ function startServer() {
         logToFile('API: POST /start called');
         if (agentProcessStarted) {
             logToFile('API: Agent process already started');
-            return res.status(409).send('Agent process already started. Restart not allowed.');
+            res.status(409).send('Agent process already started. Restart not allowed.');
         }
 
         const newSettings = req.body;
@@ -335,7 +332,7 @@ function startServer() {
             .map(([key]) => key);
 
         if (emptyFields.length > 0) {
-            return res.status(400).json({
+            res.status(400).json({
                 error: "Empty fields not allowed",
                 emptyFields: emptyFields
             });
@@ -366,10 +363,10 @@ function startServer() {
     app.post('/save-profiles', express.json(), (req, res) => {
         const profilesDir = path.join(userDataDir, 'profiles');
         const ethanTemplatePath = path.join(electronApp.getAppPath(), 'ethan.json');
-        const newProfiles = req.body.profiles;
+        const newProfiles: BotProfile[] = req.body.profiles;
         // Validate input
         if (!Array.isArray(newProfiles) || newProfiles.some(profile => !profile.name || !profile.personality)) {
-            return res.status(400).json({ error: "Invalid input. Each profile must have 'name' and 'personality' fields." });
+            res.status(400).json({ error: "Invalid input. Each profile must have 'name' and 'personality' fields." });
         }
 
         // Delete all existing profiles
