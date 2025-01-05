@@ -1,4 +1,4 @@
-import { RawData, WebSocket } from "ws";
+import { WebSocket } from "ws";
 import DeepgramFacade from "./DeepgramFacade";
 import { WSS_BACKEND_URL } from "../constants.mjs";
 
@@ -28,7 +28,7 @@ export default class DeepgramProxy extends DeepgramFacade {
     });
   }
 
-  send(data: RawData): void {
+  send(): void {
     throw new Error("Method not implemented.");
   }
 

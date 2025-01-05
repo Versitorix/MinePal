@@ -1,5 +1,5 @@
 import { createClient, DeepgramClient, ListenLiveClient, LiveTranscriptionEvents, SOCKET_STATES } from '@deepgram/sdk';
-import { RawData, WebSocket } from 'ws';
+import { RawData } from 'ws';
 import DeepgramFacade from './DeepgramFacade';
 
 export default class DeepgramLocal extends DeepgramFacade {
@@ -24,13 +24,13 @@ export default class DeepgramLocal extends DeepgramFacade {
         });
 
         this.keepAliveInterval = setInterval(() => {
-            this.deepgramLiveClient!.keepAlive();
+            this.deepgramLiveClient?.keepAlive();
         }, 10 * 1000);
 
-        this.deepgramLiveClient!.addListener(LiveTranscriptionEvents.Open, async () => {
+        this.deepgramLiveClient.addListener(LiveTranscriptionEvents.Open, async () => {
             console.log("deepgram: connected");
 
-            this.deepgramLiveClient!.addListener(LiveTranscriptionEvents.Transcript, (data) => {
+            this.deepgramLiveClient?.addListener(LiveTranscriptionEvents.Transcript, (data) => {
                 const jsonData = {
                     is_final: data.is_final,
                     speech_final: data.speech_final,
@@ -39,12 +39,12 @@ export default class DeepgramLocal extends DeepgramFacade {
                 this.dispatch("transcript", jsonData);
             });
 
-            this.deepgramLiveClient!.addListener(LiveTranscriptionEvents.Close, async () => {
+            this.deepgramLiveClient?.addListener(LiveTranscriptionEvents.Close, async () => {
                 console.log("deepgram: disconnected");
                 this.close();
             });
 
-            this.deepgramLiveClient!.addListener(LiveTranscriptionEvents.Error, async (error) => {
+            this.deepgramLiveClient?.addListener(LiveTranscriptionEvents.Error, async (error) => {
                 console.log("deepgram: error received");
                 this.dispatch("error", error);
             });

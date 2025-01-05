@@ -31,3 +31,4 @@ agent-runlogs/
 node_modules*/
 
 .vite/
+.webpack/

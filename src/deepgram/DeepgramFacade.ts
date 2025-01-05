@@ -1,4 +1,4 @@
-import { RawData, WebSocket } from "ws";
+import { RawData } from "ws";
 
 type DeepgramFacadeEvents = "close" | "connect" | "transcript" | "error";
 type Callback<T = unknown> = (args?: T) => Promise<void> | void;

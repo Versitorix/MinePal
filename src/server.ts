@@ -12,8 +12,8 @@ import { GlobalKeyboardListener } from 'node-global-key-listener';
 import DeepgramFacade from './deepgram/DeepgramFacade';
 import DeepgramLocal from './deepgram/local';
 import DeepgramProxy from './deepgram/proxy';
-import { ServerSideUserSettings, UserSettings } from '../types/config';
-import { BotProfile, ServerSideBotProfile } from '#types/botProfile';
+import { ServerSideUserSettings, UserSettings } from './types/config';
+import { BotProfile, ServerSideBotProfile } from './types/botProfile';
 
 const logFile = path.join(electronApp.getPath('userData'), 'app.log');
 const logStream = fs.createWriteStream(logFile, { flags: 'a' });
@@ -30,7 +30,7 @@ function logToFile(message: string) {
     logStream.write(`${datedMessage}\n`);
 }
 
-function broadcastMessage(message: any) {
+function broadcastMessage(message: string) {
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(message);
@@ -51,7 +51,7 @@ function setupVoice(settings: UserSettings) {
         gkl = new GlobalKeyboardListener();
 
         gkl.addListener((e) => {
-            if (e.name.toLowerCase() === key_binding.toLowerCase()) {
+            if (e.name?.toLowerCase() === key_binding.toLowerCase()) {
                 if (e.state === 'DOWN') {
                     if (voice_mode === 'push_to_talk') {
                         isKeyDown = true;
@@ -94,7 +94,7 @@ function startServer() {
             voice_mode: "always_on",
             key_binding: "",
             openai_api_key: "",
-            model: "",
+            model: "gpt-4o-mini",
             language: "en",
             useOwnApiKey: false,
             use_own_deepgram_api_key: false,
@@ -121,7 +121,7 @@ function startServer() {
     }));
 
     // Debugging middleware to log incoming requests
-    app.use((req, res, next) => {
+    app.use((_, __, next) => {
         // logToFile(`Incoming request: ${req.method} ${req.url}`);
         next();
     });
@@ -190,7 +190,7 @@ function startServer() {
         deepgramClient.connect();
     });
 
-    app.get('/backend-alive', async (req, res) => {
+    app.get('/backend-alive', async (_, res) => {
         try {
             const response = await fetch(`${HTTPS_BACKEND_URL}/ping`);
             if (response.ok && await response.text() === 'pong') {
@@ -198,13 +198,17 @@ function startServer() {
             } else {
                 res.json({ backend_alive: false });
             }
-        } catch (error) {
-            logToFile(`Heartbeat error: ${error.message}`);
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                logToFile(`Heartbeat error: ${error.message}`);
+            } else {
+                logToFile(`Heartbeat error: ${error}`);
+            }
             res.json({ backend_alive: false });
         }
     });
 
-    app.get('/settings', (req, res) => {
+    app.get('/settings', (_, res) => {
         const profilesDir = path.join(userDataDir, 'profiles');
         const updatedProfiles: ServerSideBotProfile[] = [];
         const ethanTemplatePath = path.join(electronApp.getAppPath(), 'ethan.json');
@@ -265,11 +269,11 @@ function startServer() {
         });
     });
 
-    app.get('/agent-status', (req, res) => {
+    app.get('/agent-status', (_, res) => {
         res.json({ agentStarted: agentProcessStarted });
     });
 
-    app.post('/stop', (req, res) => {
+    app.post('/stop', (_, res) => {
         logToFile('API: POST /stop called');
         if (!agentProcessStarted) {
             logToFile('API: No agent processes running');
@@ -277,7 +281,7 @@ function startServer() {
         }
 
         agentProcesses.forEach(agentProcess => {
-            agentProcess.agentProcess.kill();
+            agentProcess.agentProcess?.kill();
         });
 
         agentProcesses = [];
@@ -349,7 +353,7 @@ function startServer() {
         profiles = newSettings.profiles;
         load_memory = newSettings.load_memory;
 
-        for (let profile of profiles) {
+        for (const profile of profiles) {
             const profileBotName = profile.name;
             const agentProcess = new AgentProcess(notifyBotKicked);
             agentProcess.start(profileBotName, userDataDir, newSettings.useOwnApiKey, newSettings.openai_api_key, load_memory);
@@ -392,7 +396,7 @@ function startServer() {
         logToFile('Shutting down gracefully...');
         if (agentProcessStarted) {
             agentProcesses.forEach(agentProcess => {
-                agentProcess.agentProcess.kill('SIGTERM');
+                agentProcess.agentProcess?.kill('SIGTERM');
             });
             agentProcesses = [];
             agentProcessStarted = false;
