@@ -1,5 +1,5 @@
-import { actionsList } from './actions.js';
-import { queryList } from './queries.js';
+import { actionsList } from './actions.mjs';
+import { queryList } from './queries.mjs';
 
 
 const commandList = queryList.concat(actionsList);
@@ -32,7 +32,7 @@ export function commandExists(commandName) {
 function parseCommandMessage(message) {
     const commandMatch = message.match(commandRegex);
     if (commandMatch) {
-        const commandName = "!"+commandMatch[1];
+        const commandName = "!" + commandMatch[1];
         if (!commandMatch[2])
             return { commandName, args: [] };
         let args = commandMatch[2].match(argRegex);
@@ -44,7 +44,7 @@ function parseCommandMessage(message) {
             for (let i = 0; i < args.length; i++) {
                 let arg = args[i];
                 if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) {
-                    args[i] = arg.substring(1, arg.length-1);
+                    args[i] = arg.substring(1, arg.length - 1);
                 } else if (!isNaN(arg)) {
                     args[i] = Number(arg);
                 } else if (arg === 'true' || arg === 'false') {
@@ -89,7 +89,7 @@ export async function executeCommand(agent, message) {
             console.log('Executing command:', command.name);
             console.log('Agent:', agent.name);
             console.log('Arguments:', JSON.stringify(parsed.args, null, 2));
-            
+
             return await command.perform(agent, ...parsed.args);
         }
     } else

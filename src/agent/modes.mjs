@@ -1,6 +1,6 @@
-import * as skills from './library/skills.js';
-import * as world from './library/world.js';
-import MCData from '../utils/mcdata.js';
+import * as skills from './library/skills.mjs';
+import * as world from './library/world.mjs';
+import MCData from '../utils/mcdata.mjs';
 
 // a mode is a function that is called every tick to respond immediately to the world
 // it has the following fields:
@@ -29,8 +29,8 @@ const modes = [
             const bot = agent.bot;
             let block = bot.blockAt(bot.entity.position);
             let blockAbove = bot.blockAt(bot.entity.position.offset(0, 1, 0));
-            if (!block) block = {name: 'air'}; // hacky fix when blocks are not loaded
-            if (!blockAbove) blockAbove = {name: 'air'};
+            if (!block) block = { name: 'air' }; // hacky fix when blocks are not loaded
+            if (!blockAbove) blockAbove = { name: 'air' };
             if (blockAbove.name === 'water' || blockAbove.name === 'flowing_water') {
                 // does not call execute so does not interrupt other actions
                 if (!bot.pathfinder.goal) {
@@ -231,7 +231,7 @@ const modes = [
             }
             if (entity_in_view && this.staring) {
                 let isbaby = entity.type !== 'player' && entity.metadata[16];
-                let height = isbaby ? entity.height/2 : entity.height;
+                let height = isbaby ? entity.height / 2 : entity.height;
                 agent.bot.lookAt(entity.position.offset(0, height, 0));
             }
             if (!entity_in_view)
@@ -241,7 +241,7 @@ const modes = [
                 this.staring = Math.random() < 0.3;
                 if (!this.staring) {
                     const yaw = Math.random() * Math.PI * 2;
-                    const pitch = (Math.random() * Math.PI/2) - Math.PI/4;
+                    const pitch = (Math.random() * Math.PI / 2) - Math.PI / 4;
                     agent.bot.look(yaw, pitch, false);
                 }
                 this.next_change = Date.now() + Math.random() * 10000 + 2000;
@@ -302,7 +302,7 @@ const modes = [
  * @param {Function} func - The function to execute.
  * @param {number} [timeout=-1] - Optional timeout for the function execution.
  */
-async function execute(mode, agent, func, timeout=-1) {
+async function execute(mode, agent, func, timeout = -1) {
     let code_return = await agent.coder.execute(async () => {
         await func();
     }, timeout);

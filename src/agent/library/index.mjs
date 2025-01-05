@@ -1,14 +1,14 @@
-import * as skills from './skills.js';
-import * as world from './world.js';
+import * as skills from './skills.mjs';
+import * as world from './world.mjs';
 
 
 export function docHelper(functions, module_name) {
     let docstring = '';
     for (let skillFunc of functions) {
         let str = skillFunc.toString();
-        if (str.includes('/**')){
-            docstring += module_name+'.'+skillFunc.name;
-            docstring += str.substring(str.indexOf('/**')+3, str.indexOf('**/')) + '\n';
+        if (str.includes('/**')) {
+            docstring += module_name + '.' + skillFunc.name;
+            docstring += str.substring(str.indexOf('/**') + 3, str.indexOf('**/')) + '\n';
         }
     }
     return docstring;

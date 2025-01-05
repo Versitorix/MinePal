@@ -1,4 +1,4 @@
-import { Agent } from '../agent/agent.js';
+import { Agent } from '../agent/agent.mjs';
 import yargs from 'yargs';
 import fs from 'fs';
 import path from 'path';

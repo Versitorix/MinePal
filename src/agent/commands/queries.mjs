@@ -1,5 +1,5 @@
-import * as world from "../library/world.js";
-import MCData from "../../utils/mcdata.js";
+import * as world from "../library/world.mjs";
+import MCData from "../../utils/mcdata.mjs";
 
 const pad = (str) => {
   return "\n" + str + "\n";
@@ -102,9 +102,8 @@ export const queryList = [
       res += "\nArmor Slots:";
       for (const [slotName, slotIndex] of Object.entries(armorSlots)) {
         let item = bot.inventory.slots[slotIndex];
-        res += `\n- ${slotName}: ${
-          item ? `${item.name}: ${item.count}` : "empty"
-        }`;
+        res += `\n- ${slotName}: ${item ? `${item.name}: ${item.count}` : "empty"
+          }`;
       }
 
       if (res === "INVENTORY") {

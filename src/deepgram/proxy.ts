@@ -1,6 +1,6 @@
 import { RawData, WebSocket } from "ws";
 import DeepgramFacade from "./DeepgramFacade";
-import { WSS_BACKEND_URL } from "../constants";
+import { WSS_BACKEND_URL } from "../constants.mjs";
 
 export default class DeepgramProxy extends DeepgramFacade {
   private proxyWebSocket?: WebSocket;

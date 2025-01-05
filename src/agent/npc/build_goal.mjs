@@ -1,7 +1,7 @@
 import { Vec3 } from 'vec3';
-import * as skills from '../library/skills.js';
-import * as world from '../library/world.js';
-import { blockSatisfied, getTypeOfGeneric, rotateXZ } from './utils.js';
+import * as skills from '../library/skills.mjs';
+import * as world from '../library/world.mjs';
+import { blockSatisfied, getTypeOfGeneric, rotateXZ } from './utils.mjs';
 
 
 export class BuildGoal {
@@ -16,7 +16,7 @@ export class BuildGoal {
         return !res.interrupted;
     }
 
-    async executeNext(goal, position=null, orientation=null) {
+    async executeNext(goal, position = null, orientation = null) {
         let sizex = goal.blocks[0][0].length;
         let sizez = goal.blocks[0].length;
         let sizey = goal.blocks.length;
@@ -33,7 +33,7 @@ export class BuildGoal {
         let inventory = world.getInventoryCounts(this.agent.bot);
         let missing = {};
         let acted = false;
-        for (let y = goal.offset; y < sizey+goal.offset; y++) {
+        for (let y = goal.offset; y < sizey + goal.offset; y++) {
             for (let z = 0; z < sizez; z++) {
                 for (let x = 0; x < sizex; x++) {
 
@@ -53,7 +53,7 @@ export class BuildGoal {
                             res = await this.wrapSkill(async () => {
                                 await skills.breakBlockAt(this.agent.bot, world_pos.x, world_pos.y, world_pos.z);
                             });
-                            if (!res) return {missing: missing, acted: acted, position: position, orientation: orientation};
+                            if (!res) return { missing: missing, acted: acted, position: position, orientation: orientation };
                         }
 
                         if (block_name !== 'air') {
@@ -62,7 +62,7 @@ export class BuildGoal {
                                 res = await this.wrapSkill(async () => {
                                     await skills.placeBlock(this.agent.bot, block_typed, world_pos.x, world_pos.y, world_pos.z);
                                 });
-                                if (!res) return {missing: missing, acted: acted, position: position, orientation: orientation};
+                                if (!res) return { missing: missing, acted: acted, position: position, orientation: orientation };
                             } else {
                                 if (missing[block_typed] === undefined)
                                     missing[block_typed] = 0;
@@ -73,7 +73,7 @@ export class BuildGoal {
                 }
             }
         }
-        return {missing: missing, acted: acted, position: position, orientation: orientation};
+        return { missing: missing, acted: acted, position: position, orientation: orientation };
     }
 
 }

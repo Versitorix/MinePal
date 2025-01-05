@@ -1,15 +1,15 @@
 import { readFileSync } from 'fs';
-import { History } from './history.js';
-import { Coder } from './coder.js';
-import { Prompter } from './prompter.js';
-import { initModes } from './modes.js';
-import MCData from '../utils/mcdata.js';
-import { containsCommand, commandExists, executeCommand, truncCommandMessage } from './commands/index.js';
-import { NPCContoller } from './npc/controller.js';
-import { MemoryBank } from './memory_bank.js';
+import { History } from './history.mjs';
+import { Coder } from './coder.mjs';
+import { Prompter } from './prompter.mjs';
+import { initModes } from './modes.mjs';
+import MCData from '../utils/mcdata.mjs';
+import { containsCommand, commandExists, executeCommand, truncCommandMessage } from './commands/index.mjs';
+import { NPCContoller } from './npc/controller.mjs';
+import { MemoryBank } from './memory_bank.mjs';
 import fs from 'fs/promises';
-import { queryList } from './commands/queries.js';
-import * as world from "./library/world.js";
+import { queryList } from './commands/queries.mjs';
+import * as world from "./library/world.mjs";
 
 const queryMap = {
     stats: queryList.find(query => query.name === "!stats").perform,
@@ -51,7 +51,7 @@ export class Agent {
      * @param {string} appPath - Path to the application directory.
      * @param {boolean} load_mem - Whether to load memory from previous sessions.
      */
-    async start(profile_fp, userDataDir, appPath, load_mem=false) {
+    async start(profile_fp, userDataDir, appPath, load_mem = false) {
         // Initialize agent components
         this.userDataDir = userDataDir;
         this.appPath = appPath
@@ -84,7 +84,7 @@ export class Agent {
 
             console.log(`${this.name} spawned.`);
             this.coder.clear();
-            
+
             // Define messages to ignore
             const ignore_messages = [
                 "Set own game mode to",
@@ -95,7 +95,7 @@ export class Agent {
                 "Gamerule "
             ];
             const eventname = this.settings.profiles.length > 1 ? 'whisper' : 'chat'; // Updated to use instance variable
-            
+
             // Set up chat event listener
             this.bot.on(eventname, (username, message) => {
                 if (username === this.name) return;
@@ -238,7 +238,7 @@ export class Agent {
             hudString: `${statsRes}\n${inventoryRes}\n${blocksRes}\n${entitiesRes}`
         };
     }
-    
+
     /**
      * Handles incoming messages and executes appropriate actions.
      * @param {string} source - The source of the message.
@@ -355,7 +355,7 @@ export class Agent {
         });
 
         // Error handling and logging
-        this.bot.on('error' , (err) => {
+        this.bot.on('error', (err) => {
             console.error('Error event!', err);
         });
         this.bot.on('end', (reason) => {
@@ -371,7 +371,7 @@ export class Agent {
         this.bot.on('kicked', (reason) => {
             console.warn('Bot kicked!', reason);
             console.log('[CLEANKILL] Bot kicked.');
-            this.cleanKill('Bot kicked! Killing agent process.', reason="KICK");
+            this.cleanKill('Bot kicked! Killing agent process.', reason = "KICK");
         });
         this.bot.on('messagestr', async (message, _, jsonMsg) => {
             if (jsonMsg.translate && jsonMsg.translate.startsWith('death') && message.startsWith(this.name)) {
@@ -412,12 +412,12 @@ export class Agent {
     isIdle() {
         return !this.coder.executing && !this.coder.generating;
     }
-    
+
     /**
      * Performs a clean shutdown of the agent.
      * @param {string} msg - Message to log before shutting down.
      */
-    cleanKill(msg='Killing agent process...', reason = null) {
+    cleanKill(msg = 'Killing agent process...', reason = null) {
         this.history.add('system', msg);
         this.sendMessage('Goodbye world.')
         this.history.save();

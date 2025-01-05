@@ -3,7 +3,7 @@ import { app as electronApp } from 'electron';
 import express from 'express';
 import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { HTTPS_BACKEND_URL, WSS_BACKEND_URL } from './constants';
+import { HTTPS_BACKEND_URL, WSS_BACKEND_URL } from './constants.mjs';
 import fs from 'fs';
 import cors from 'cors';
 import path from 'path';

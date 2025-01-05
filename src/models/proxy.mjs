@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { HTTPS_BACKEND_URL } from '../constants.js';
+import { HTTPS_BACKEND_URL } from '../constants.mjs';
 const minepal_response_schema = {
     type: "object",
     properties: {
@@ -15,8 +15,8 @@ export class Proxy {
         console.log(`Using model: ${model_name}`);
     }
 
-    async sendRequest(turns, systemMessage, stop_seq='***', memSaving=false) {
-        let messages = [{'role': 'system', 'content': systemMessage}].concat(turns);
+    async sendRequest(turns, systemMessage, stop_seq = '***', memSaving = false) {
+        let messages = [{ 'role': 'system', 'content': systemMessage }].concat(turns);
         let res = null;
         // console.log("=== BEGIN MESSAGES ===");
         // messages.forEach((msg, index) => {

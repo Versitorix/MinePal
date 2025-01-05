@@ -1,8 +1,8 @@
 import pf from 'mineflayer-pathfinder';
-import MCData from '../../utils/mcdata.js';
+import MCData from '../../utils/mcdata.mjs';
 
 
-export function getNearestFreeSpace(bot, size=1, distance=8) {
+export function getNearestFreeSpace(bot, size = 1, distance = 8) {
     /**
      * Get the nearest empty space with solid blocks beneath it of the given size.
      * @param {Bot} bot - The bot to get the nearest free space for.
@@ -39,7 +39,7 @@ export function getNearestFreeSpace(bot, size=1, distance=8) {
 }
 
 
-export function getNearestBlocks(bot, block_types=null, distance=64, count=10000) {
+export function getNearestBlocks(bot, block_types = null, distance = 64, count = 10000) {
     /**
      * Get a list of the nearest blocks of the given types.
      * @param {Bot} bot - The bot to get the nearest block for.
@@ -58,12 +58,12 @@ export function getNearestBlocks(bot, block_types=null, distance=64, count=10000
     else {
         if (!Array.isArray(block_types))
             block_types = [block_types];
-        for(let block_type of block_types) {
+        for (let block_type of block_types) {
             block_ids.push(MCData.getInstance().getBlockId(block_type));
         }
     }
 
-    let positions = bot.findBlocks({matching: block_ids, maxDistance: distance, count: count});
+    let positions = bot.findBlocks({ matching: block_ids, maxDistance: distance, count: count });
     let blocks = [];
     for (let i = 0; i < positions.length; i++) {
         let block = bot.blockAt(positions[i]);
@@ -82,16 +82,16 @@ export function getNearestBlocks(bot, block_types=null, distance=64, count=10000
 }
 
 
-export function getNearestBlock(bot, block_type, distance=16) {
-     /**
-     * Get the nearest block of the given type.
-     * @param {Bot} bot - The bot to get the nearest block for.
-     * @param {string} block_type - The name of the block to search for.
-     * @param {number} distance - The maximum distance to search, default 16.
-     * @returns {Block} - The nearest block of the given type.
-     * @example
-     * let coalBlock = world.getNearestBlock(bot, 'coal_ore', 16);
-     **/
+export function getNearestBlock(bot, block_type, distance = 16) {
+    /**
+    * Get the nearest block of the given type.
+    * @param {Bot} bot - The bot to get the nearest block for.
+    * @param {string} block_type - The name of the block to search for.
+    * @param {number} distance - The maximum distance to search, default 16.
+    * @returns {Block} - The nearest block of the given type.
+    * @example
+    * let coalBlock = world.getNearestBlock(bot, 'coal_ore', 16);
+    **/
     let blocks = getNearestBlocks(bot, block_type, distance, 1);
     if (blocks.length > 0) {
         return blocks[0];
@@ -100,7 +100,7 @@ export function getNearestBlock(bot, block_type, distance=16) {
 }
 
 
-export function getNearbyEntities(bot, maxDistance=16) {
+export function getNearbyEntities(bot, maxDistance = 16) {
     let entities = [];
     for (const entity of Object.values(bot.entities)) {
         const distance = entity.position.distanceTo(bot.entity.position);
@@ -115,7 +115,7 @@ export function getNearbyEntities(bot, maxDistance=16) {
     return res;
 }
 
-export function getNearestEntityWhere(bot, predicate, maxDistance=16) {
+export function getNearestEntityWhere(bot, predicate, maxDistance = 16) {
     return bot.nearestEntity(entity => predicate(entity) && bot.entity.position.distanceTo(entity.position) < maxDistance);
 }
 
@@ -128,7 +128,7 @@ export function getNearbyPlayers(bot, maxDistance) {
         if (distance > maxDistance) continue;
         if (entity.type == 'player' && entity.username != bot.username) {
             players.push({ entity: entity, distance: distance });
-        } 
+        }
     }
     players.sort((a, b) => a.distance - b.distance);
     let res = [];
@@ -224,7 +224,7 @@ export function getNearbyPlayerNames(bot) {
 }
 
 
-export function getNearbyBlockTypes(bot, distance=16) {
+export function getNearbyBlockTypes(bot, distance = 16) {
     /**
      * Get a list of all nearby block names.
      * @param {Bot} bot - The bot to get nearby blocks for.

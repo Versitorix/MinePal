@@ -1,11 +1,11 @@
 import { mkdirSync, writeFileSync } from 'fs';
-import { getCommandDocs } from './commands/index.js';
-import { getSkillDocs } from './library/index.js';
-import { stringifyTurns } from '../utils/text.js';
-import { getCommand } from './commands/index.js';
+import { getCommandDocs } from './commands/index.mjs';
+import { getSkillDocs } from './library/index.mjs';
+import { stringifyTurns } from '../utils/text.mjs';
+import { getCommand } from './commands/index.mjs';
 
-import { Proxy } from '../models/proxy.js';
-import { GPT } from '../models/gpt.js';
+import { Proxy } from '../models/proxy.mjs';
+import { GPT } from '../models/gpt.mjs';
 
 export class Prompter {
     constructor(agent) {
@@ -15,7 +15,7 @@ export class Prompter {
         let name = this.profile.name;
         let chat = this.profile.model;
         if (typeof chat === 'string' || chat instanceof String) {
-            chat = {model: chat};
+            chat = { model: chat };
             if (chat.model.includes('gpt'))
                 chat.api = 'openai';
             else
@@ -39,10 +39,10 @@ export class Prompter {
 
         let embedding = this.profile.embedding;
         if (embedding === undefined) {
-            embedding = {api: chat.api};
+            embedding = { api: chat.api };
         }
         else if (typeof embedding === 'string' || embedding instanceof String)
-            embedding = {api: embedding};
+            embedding = { api: embedding };
 
         console.log('Using embedding settings:', embedding);
 
@@ -77,7 +77,7 @@ export class Prompter {
         return this.profile.modes;
     }
 
-    async replaceStrings(prompt, messages, prev_memory=null, to_summarize=[], last_goals=null) {
+    async replaceStrings(prompt, messages, prev_memory = null, to_summarize = [], last_goals = null) {
         prompt = prompt.replaceAll('$NAME', this.agent.name);
         prompt = prompt.replaceAll('$OWNER', this.agent.owner);
         prompt = prompt.replaceAll('$LANGUAGE', this.agent.settings.language);
@@ -139,15 +139,15 @@ export class Prompter {
         ({ chat_response, execute_command } = response);
         console.log('Chat Response:', chat_response);
         console.log('Execute Command:', execute_command);
-        
+
         if (chat_response === undefined || execute_command === undefined) {
             return "Oops! OpenAI's server took an arrow to the knee. Mind trying that prompt again?";
         }
-        
+
         if (execute_command && !execute_command.startsWith('!')) {
             execute_command = '!' + execute_command;
         }
-        
+
         return (chat_response || "On it.") + " " + execute_command;
     }
 

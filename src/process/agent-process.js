@@ -35,7 +35,7 @@ export class AgentProcess {
     start(profile, userDataDir, useOwnApiKey, openai_api_key, load_memory = false) {
         this.botName = profile;
         // Prepare arguments for the agent process
-        let args = [path.join(app.getAppPath(), 'src/process/init-agent.js')]; // Adjust path
+        let args = [path.join(app.getAppPath(), 'src/process/init-agent.mjs')]; // Adjust path
         const logDirectory = app.getPath('userData');
         const profilesDir = path.join(logDirectory, 'profiles');
         const profilePath = path.join(profilesDir, `${profile}.json`);
@@ -65,7 +65,7 @@ export class AgentProcess {
         }
         // Spawn the agent process using Node.js's child_process.fork
         const env = useOwnApiKey ? { OPENAI_API_KEY: openai_api_key } : {};
-        this.agentProcess = fork(path.join(app.getAppPath(), 'src/process/init-agent.js'), args, {
+        this.agentProcess = fork(path.join(app.getAppPath(), 'src/process/init-agent.mjs'), args, {
             stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
             env: env
         });

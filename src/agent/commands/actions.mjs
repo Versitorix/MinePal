@@ -1,4 +1,4 @@
-import * as skills from "../library/skills.js";
+import * as skills from "../library/skills.mjs";
 
 function wrapExecution(func, timeout = -1, resume_name = null) {
   return async function (agent, ...args) {
@@ -15,9 +15,9 @@ function wrapExecution(func, timeout = -1, resume_name = null) {
       code_return = await agent.coder.execute(async () => {
         await func(agent, ...args);
       }, timeout);
-    if (agent.followPlayerName) {
-      await skills.followPlayer(agent.bot, agent.followPlayerName);
-    }
+      if (agent.followPlayerName) {
+        await skills.followPlayer(agent.bot, agent.followPlayerName);
+      }
     }
     if (code_return.interrupted && !code_return.timedout) return;
     return code_return.message;
@@ -71,10 +71,10 @@ export const actionsList = [
     name: "!teleportToPlayer",
     description: "Teleport to the given player. Argument is only player's name.",
     params: {
-        player_name: "(string) The name of the player to teleport to.",
+      player_name: "(string) The name of the player to teleport to.",
     },
     perform: wrapExecution(async (agent, player_name) => {
-        return await skills.teleportToPlayer(agent.bot, player_name);
+      return await skills.teleportToPlayer(agent.bot, player_name);
     }),
   },
   {
@@ -88,7 +88,7 @@ export const actionsList = [
       async (agent, player_name, follow_dist) => {
         const success = await skills.followPlayer(agent.bot, player_name, 1);
         if (success) {
-            agent.followPlayerName = player_name;
+          agent.followPlayerName = player_name;
         }
       },
       -1,

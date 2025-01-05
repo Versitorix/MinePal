@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from 'fs';
-import { NPCData } from './data.js';
-import { ItemGoal } from './item_goal.js';
-import { BuildGoal } from './build_goal.js';
-import { itemSatisfied, rotateXZ } from './utils.js';
-import * as skills from '../library/skills.js';
+import { NPCData } from './data.mjs';
+import { ItemGoal } from './item_goal.mjs';
+import { BuildGoal } from './build_goal.mjs';
+import { itemSatisfied, rotateXZ } from './utils.mjs';
+import * as skills from '../library/skills.mjs';
 
 
 export class NPCContoller {
@@ -25,10 +25,10 @@ export class NPCContoller {
             let sizex = this.constructions[name].blocks[0][0].length;
             let sizez = this.constructions[name].blocks[0].length;
             let sizey = this.constructions[name].blocks.length;
-            for (let y = offset; y < sizey+offset; y++) {
+            for (let y = offset; y < sizey + offset; y++) {
                 for (let z = 0; z < sizez; z++) {
                     for (let x = 0; x < sizex; x++) {
-                        positions.push({x: position.x + x, y: position.y + y, z: position.z + z});
+                        positions.push({ x: position.x + x, y: position.y + y, z: position.z + z });
                     }
                 }
             }
@@ -78,17 +78,17 @@ export class NPCContoller {
         });
     }
 
-    async setGoal(name=null, quantity=1) {
+    async setGoal(name = null, quantity = 1) {
         this.data.curr_goal = null;
         this.last_goals = {};
         if (name) {
-            this.data.curr_goal = {name: name, quantity: quantity};
+            this.data.curr_goal = { name: name, quantity: quantity };
             return;
         }
 
         if (!this.data.do_set_goal) return;
 
-        let past_goals = {...this.last_goals};
+        let past_goals = { ...this.last_goals };
         for (let goal in this.data.goals) {
             if (past_goals[goal.name] === undefined) past_goals[goal.name] = true;
         }
@@ -107,7 +107,7 @@ export class NPCContoller {
             await skills.moveAway(this.agent.bot, 2);
         });
 
-        if (!this.data.do_routine || this.agent.bot.time.timeOfDay < 13000) { 
+        if (!this.data.do_routine || this.agent.bot.time.timeOfDay < 13000) {
             // Exit any buildings
             let building = this.currentBuilding();
             if (building == this.data.home) {

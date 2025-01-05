@@ -1,8 +1,8 @@
-import MCData from "../../utils/mcdata.js";
-import * as world from "./world.js";
+import MCData from "../../utils/mcdata.mjs";
+import * as world from "./world.mjs";
 import pf from "mineflayer-pathfinder";
 import Vec3 from "vec3";
-import { queryList } from "../commands/queries.js";
+import { queryList } from "../commands/queries.mjs";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -135,8 +135,7 @@ export async function craftRecipe(bot, itemName, num = 1) {
   await bot.craft(recipe, actualNum, craftingTable);
   log(
     bot,
-    `Successfully crafted ${itemName}, you now have ${
-      world.getInventoryCounts(bot)[itemName]
+    `Successfully crafted ${itemName}, you now have ${world.getInventoryCounts(bot)[itemName]
     } ${itemName}.`
   );
   if (placedTable) {
@@ -396,8 +395,7 @@ export async function attackNearest(
   }
   log(
     bot,
-    `Could not find any ${
-      isPlayer ? "player" : "mob"
+    `Could not find any ${isPlayer ? "player" : "mob"
     } named ${mobType} to attack.`
   );
   return false;
@@ -773,10 +771,10 @@ export async function placeBlock(
       placeOn === "north"
         ? "south"
         : placeOn === "south"
-        ? "north"
-        : placeOn === "east"
-        ? "west"
-        : "east";
+          ? "north"
+          : placeOn === "east"
+            ? "west"
+            : "east";
     if (blockType.includes("torch") && placeOn !== "bottom") {
       // insert wall_ before torch
       blockType = blockType.replace("torch", "wall_torch");
@@ -814,26 +812,26 @@ export async function placeBlock(
     if (blockType.includes("door"))
       bot.chat(
         "/setblock " +
-          Math.floor(x) +
-          " " +
-          Math.floor(y + 1) +
-          " " +
-          Math.floor(z) +
-          " " +
-          blockType +
-          "[half=upper]"
+        Math.floor(x) +
+        " " +
+        Math.floor(y + 1) +
+        " " +
+        Math.floor(z) +
+        " " +
+        blockType +
+        "[half=upper]"
       );
     if (blockType.includes("bed"))
       bot.chat(
         "/setblock " +
-          Math.floor(x) +
-          " " +
-          Math.floor(y) +
-          " " +
-          Math.floor(z - 1) +
-          " " +
-          blockType +
-          "[part=head]"
+        Math.floor(x) +
+        " " +
+        Math.floor(y) +
+        " " +
+        Math.floor(z - 1) +
+        " " +
+        blockType +
+        "[part=head]"
       );
     log(bot, `Used /setblock to place ${blockType} at ${target_dest}.`);
     return true;
@@ -1999,165 +1997,165 @@ export async function sowSeeds(bot, seedType) {
 }
 
 export async function buildHouse(bot, houseType) {
-    const designsDir = path.join(__dirname, '../npc/construction');
-    const designFiles = fs.readdirSync(designsDir).filter(file => file.endsWith('.json'));
-    const designNames = designFiles.map(file => file.replace('.json', ''));
+  const designsDir = path.join(__dirname, '../npc/construction');
+  const designFiles = fs.readdirSync(designsDir).filter(file => file.endsWith('.json'));
+  const designNames = designFiles.map(file => file.replace('.json', ''));
 
-    if (!designNames.includes(houseType)) {
-        log(bot, `Invalid design '${houseType}'. Available designs: ${designNames.join(', ')}`);
-        return null;
+  if (!designNames.includes(houseType)) {
+    log(bot, `Invalid design '${houseType}'. Available designs: ${designNames.join(', ')}`);
+    return null;
+  }
+
+  const filePath = path.join(designsDir, `${houseType}.json`);
+  const data = fs.readFileSync(filePath, 'utf8');
+  const design = JSON.parse(data);
+
+  const specialBlocks = {
+    bed: item => item.name.endsWith('_bed'),
+    log: item => item.name.endsWith('_log'),
+    planks: item => item.name.endsWith('_planks'),
+    door: item => item.name.endsWith('_door'),
+    trapdoor: item => item.name.endsWith('_trapdoor'),
+    fence: item => item.name.endsWith('_fence') && !item.name.endsWith('_fence_gate'),
+    fence_gate: item => item.name.endsWith('_fence_gate'),
+    stairs: item => item.name.endsWith('_stairs'),
+    slab: item => item.name.endsWith('_slab'),
+    button: item => item.name.endsWith('_button'),
+    pressure_plate: item => item.name.endsWith('_pressure_plate'),
+    sign: item => item.name.endsWith('_sign'),
+    banner: item => item.name.endsWith('_banner'),
+    carpet: item => item.name.endsWith('_carpet'),
+    shulker_box: item => item.name.endsWith('_shulker_box'),
+    terracotta: item => item.name.endsWith('_terracotta') && !item.name.startsWith('glazed'),
+    concrete: item => item.name.endsWith('_concrete') && !item.name.endsWith('_powder'),
+    concrete_powder: item => item.name.endsWith('_concrete_powder'),
+    glazed_terracotta: item => item.name.endsWith('_glazed_terracotta')
+  };
+
+  const blocks = design.blocks.flat(2).filter(block => block !== "");
+  const inventoryCounts = world.getInventoryCounts(bot);
+
+  const requiredBlocks = blocks.reduce((acc, block) => {
+    acc[block] = (acc[block] || 0) + 1;
+    return acc;
+  }, {});
+  let missingBlocks = [];
+  for (const [block, count] of Object.entries(requiredBlocks)) {
+    if (block !== 'air') {
+      let found = false;
+      if (specialBlocks[block]) {
+        console.log(`Checking special block: ${block}`);
+        const totalCount = bot.inventory.items().reduce((sum, item) => {
+          if (specialBlocks[block](item)) {
+            sum += inventoryCounts[item.name];
+          }
+          return sum;
+        }, 0);
+        found = totalCount >= count;
+        console.log(`Block: ${block}, Total Count: ${totalCount}, Required: ${count}, Found: ${found}`);
+      } else {
+        console.log(`Checking regular block: ${block}`);
+        found = inventoryCounts[block] && inventoryCounts[block] >= count;
+        console.log(`Block: ${block}, Count: ${inventoryCounts[block]}, Required: ${count}, Found: ${found}`);
+      }
+      if (!found) {
+        missingBlocks.push(`Not enough ${block}. Required: ${count}, Available: ${inventoryCounts[block] || 0}`);
+      }
     }
+  }
+  if (missingBlocks.length > 0) {
+    log(bot, missingBlocks.join('\n'));
+    return false;
+  }
 
-    const filePath = path.join(designsDir, `${houseType}.json`);
-    const data = fs.readFileSync(filePath, 'utf8');
-    const design = JSON.parse(data);
+  const basePos = bot.entity.position;
+  const offset = design.offset < 0 ? design.offset : 0; // Ensure offset is 0 or negative
 
-    const specialBlocks = {
-        bed: item => item.name.endsWith('_bed'),
-        log: item => item.name.endsWith('_log'),
-        planks: item => item.name.endsWith('_planks'),
-        door: item => item.name.endsWith('_door'),
-        trapdoor: item => item.name.endsWith('_trapdoor'),
-        fence: item => item.name.endsWith('_fence') && !item.name.endsWith('_fence_gate'),
-        fence_gate: item => item.name.endsWith('_fence_gate'),
-        stairs: item => item.name.endsWith('_stairs'),
-        slab: item => item.name.endsWith('_slab'),
-        button: item => item.name.endsWith('_button'),
-        pressure_plate: item => item.name.endsWith('_pressure_plate'),
-        sign: item => item.name.endsWith('_sign'),
-        banner: item => item.name.endsWith('_banner'),
-        carpet: item => item.name.endsWith('_carpet'),
-        shulker_box: item => item.name.endsWith('_shulker_box'),
-        terracotta: item => item.name.endsWith('_terracotta') && !item.name.startsWith('glazed'),
-        concrete: item => item.name.endsWith('_concrete') && !item.name.endsWith('_powder'),
-        concrete_powder: item => item.name.endsWith('_concrete_powder'),
-        glazed_terracotta: item => item.name.endsWith('_glazed_terracotta')
-    };
-
-    const blocks = design.blocks.flat(2).filter(block => block !== "");
-    const inventoryCounts = world.getInventoryCounts(bot);
-
-    const requiredBlocks = blocks.reduce((acc, block) => {
-        acc[block] = (acc[block] || 0) + 1;
-        return acc;
-    }, {});
-    let missingBlocks = [];
-    for (const [block, count] of Object.entries(requiredBlocks)) {
-        if (block !== 'air') {
-            let found = false;
-            if (specialBlocks[block]) {
-                console.log(`Checking special block: ${block}`);
-                const totalCount = bot.inventory.items().reduce((sum, item) => {
-                    if (specialBlocks[block](item)) {
-                        sum += inventoryCounts[item.name];
-                    }
-                    return sum;
-                }, 0);
-                found = totalCount >= count;
-                console.log(`Block: ${block}, Total Count: ${totalCount}, Required: ${count}, Found: ${found}`);
-            } else {
-                console.log(`Checking regular block: ${block}`);
-                found = inventoryCounts[block] && inventoryCounts[block] >= count;
-                console.log(`Block: ${block}, Count: ${inventoryCounts[block]}, Required: ${count}, Found: ${found}`);
-            }
-            if (!found) {
-                missingBlocks.push(`Not enough ${block}. Required: ${count}, Available: ${inventoryCounts[block] || 0}`);
-            }
-        }
-    }
-    if (missingBlocks.length > 0) {
-        log(bot, missingBlocks.join('\n'));
-        return false;
-    }
-
-    const basePos = bot.entity.position;
-    const offset = design.offset < 0 ? design.offset : 0; // Ensure offset is 0 or negative
-
-    // Clear the area if offset is negative
-    let lastBlockName = "";
-    if (offset < 0) {
-        const layersToClear = Math.abs(offset);
-        for (let y = layersToClear - 1; y >= 0; y--) {
-            console.log(design.blocks[y].map(row => row.join(' ')).join('\n'));
-            for (let z = 0; z < design.blocks[y].length; z++) {
-                for (let x = 0; x < design.blocks[y][z].length; x++) {
-                    let blockType = design.blocks[y][z][x];
-                    if (blockType !== "") {
-                        const pos = basePos.offset(x, y + offset, z);
-                        let block = bot.blockAt(pos);
-                        if (block && block.name !== 'air') {
-                            if (block.name !== lastBlockName) {
-                                await bot.tool.equipForBlock(block);
-                                lastBlockName = block.name;
-                            }
-                            if (bot.entity.position.distanceTo(pos) > NEAR_DISTANCE) {
-                                await goToPosition(bot, pos.x, pos.y, pos.z);
-                            }
-                            await bot.dig(block);
-                        }
-                        if (bot.interrupt_code) {
-                            log(bot, "Interrupted Build House");
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    const delayedBlocks = [];
-
-    const placeBlockAtPosition = async (block, pos) => {
-        const currentBlock = bot.blockAt(pos);
-        if (block === "air" && currentBlock.name !== "air") {
-            if (bot.entity.position.distanceTo(pos) > NEAR_DISTANCE) {
+  // Clear the area if offset is negative
+  let lastBlockName = "";
+  if (offset < 0) {
+    const layersToClear = Math.abs(offset);
+    for (let y = layersToClear - 1; y >= 0; y--) {
+      console.log(design.blocks[y].map(row => row.join(' ')).join('\n'));
+      for (let z = 0; z < design.blocks[y].length; z++) {
+        for (let x = 0; x < design.blocks[y][z].length; x++) {
+          let blockType = design.blocks[y][z][x];
+          if (blockType !== "") {
+            const pos = basePos.offset(x, y + offset, z);
+            let block = bot.blockAt(pos);
+            if (block && block.name !== 'air') {
+              if (block.name !== lastBlockName) {
+                await bot.tool.equipForBlock(block);
+                lastBlockName = block.name;
+              }
+              if (bot.entity.position.distanceTo(pos) > NEAR_DISTANCE) {
                 await goToPosition(bot, pos.x, pos.y, pos.z);
+              }
+              await bot.dig(block);
             }
-            await bot.dig(currentBlock);
-        } else if (block !== "air" && block !== "") {
-            if (specialBlocks[block]) {
-                const item = bot.inventory.items().find(specialBlocks[block]);
-                if (item) {
-                    block = item.name;
-                } else {
-                    log(bot, `No ${block} found in inventory to place at ${pos}.`);
-                    return false;
-                }
+            if (bot.interrupt_code) {
+              log(bot, "Interrupted Build House");
+              return false;
             }
-            if (bot.entity.position.distanceTo(pos) > NEAR_DISTANCE) {
-                await goToPosition(bot, pos.x, pos.y, pos.z);
-            }
-            await placeBlock(bot, block, pos.x, pos.y, pos.z);
+          }
         }
-    };
-
-    for (let y = 0; y < design.blocks.length; y++) {
-        for (let z = 0; z < design.blocks[y].length; z++) {
-            for (let x = 0; x < design.blocks[y][z].length; x++) {
-                let block = design.blocks[y][z][x];
-                const pos = basePos.offset(x, y + offset, z);
-
-                if (block === "bed" || block === "door") {
-                    delayedBlocks.push({ block, pos });
-                } else {
-                    await placeBlockAtPosition(block, pos);
-                }
-                if (bot.interrupt_code) {
-                    log(bot, "Interrupted Build House");
-                    return false
-                }
-            }
-        }
+      }
     }
+  }
 
-    for (const { block, pos } of delayedBlocks) {
-        await placeBlockAtPosition(block, pos);
+  const delayedBlocks = [];
+
+  const placeBlockAtPosition = async (block, pos) => {
+    const currentBlock = bot.blockAt(pos);
+    if (block === "air" && currentBlock.name !== "air") {
+      if (bot.entity.position.distanceTo(pos) > NEAR_DISTANCE) {
+        await goToPosition(bot, pos.x, pos.y, pos.z);
+      }
+      await bot.dig(currentBlock);
+    } else if (block !== "air" && block !== "") {
+      if (specialBlocks[block]) {
+        const item = bot.inventory.items().find(specialBlocks[block]);
+        if (item) {
+          block = item.name;
+        } else {
+          log(bot, `No ${block} found in inventory to place at ${pos}.`);
+          return false;
+        }
+      }
+      if (bot.entity.position.distanceTo(pos) > NEAR_DISTANCE) {
+        await goToPosition(bot, pos.x, pos.y, pos.z);
+      }
+      await placeBlock(bot, block, pos.x, pos.y, pos.z);
+    }
+  };
+
+  for (let y = 0; y < design.blocks.length; y++) {
+    for (let z = 0; z < design.blocks[y].length; z++) {
+      for (let x = 0; x < design.blocks[y][z].length; x++) {
+        let block = design.blocks[y][z][x];
+        const pos = basePos.offset(x, y + offset, z);
+
+        if (block === "bed" || block === "door") {
+          delayedBlocks.push({ block, pos });
+        } else {
+          await placeBlockAtPosition(block, pos);
+        }
         if (bot.interrupt_code) {
-            log(bot, "Interrupted Build House");
-            return false
+          log(bot, "Interrupted Build House");
+          return false
         }
+      }
     }
+  }
 
-    log(bot, `${houseType} built successfully.`);
-    return true;
+  for (const { block, pos } of delayedBlocks) {
+    await placeBlockAtPosition(block, pos);
+    if (bot.interrupt_code) {
+      log(bot, "Interrupted Build House");
+      return false
+    }
+  }
+
+  log(bot, `${houseType} built successfully.`);
+  return true;
 }
