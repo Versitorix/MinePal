@@ -24,3 +24,9 @@ contextBridge.exposeInMainWorld('proxy', {
 contextBridge.exposeInMainWorld('minecraft', {
   alive: (host: string, port: number): Promise<boolean> => ipcRenderer.invoke('minecraft:alive', host, port),
 });
+
+contextBridge.exposeInMainWorld('voice', {
+  start: (): Promise<boolean> => ipcRenderer.invoke('voice:start'),
+  stop: (): Promise<boolean> => ipcRenderer.invoke('voice:stop'),
+  voiceChunk: (chunk: ArrayBuffer): Promise<void> => ipcRenderer.invoke('voice:voiceChunk', chunk),
+});

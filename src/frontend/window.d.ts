@@ -20,6 +20,11 @@ declare global {
     minecraft: {
       alive: (host: string, port: number) => Promise<boolean>;
     };
+    voice: {
+      start: () => Promise<boolean>;
+      stop: () => Promise<boolean>;
+      voiceChunk: (chunk: ArrayBuffer) => Promise<void>;
+    };
   }
 }
 

@@ -1,5 +1,3 @@
-import { RawData } from "ws";
-
 type DeepgramFacadeEvents = "close" | "connect" | "transcript" | "error";
 type Callback<T = unknown> = (args?: T) => Promise<void> | void;
 
@@ -27,7 +25,7 @@ export default abstract class DeepgramFacade {
   }
 
   abstract connect(): void;
-  abstract send(data: RawData): void;
+  abstract send(data: ArrayBuffer): void;
   abstract close(): void;
 
   protected dispatch(eventType: "transcript", data: DeepgramTranscriptData): Promise<void>

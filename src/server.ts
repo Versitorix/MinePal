@@ -9,30 +9,36 @@ import { BotProfile, ServerSideBotProfile } from './types/botProfile';
 import { getUserSettings, updateUserSettings } from './utils/userSettings';
 import { getProfiles, updateProfiles } from './utils/profiles';
 import logToFile from './utils/logToFile';
+import { DeepgramFacade, DeepgramLocal, DeepgramProxy } from './deepgram';
+import { GlobalKeyboardListener } from 'node-global-key-listener/build';
 
 const userDataDir = app.getPath('userData');
 
 let agentsStarted = false;
 let agentProcesses: AgentProcess[] = [];
+let voiceStarted = false;
+let deepgramClient: DeepgramFacade | undefined;
+let gkl: GlobalKeyboardListener | undefined;
+let isKeyDown = false;
+let isToggleToTalkActive = false;
 
-/* function setupVoice(settings: UserSettings) {
-  voice_mode = settings.voice_mode; // Assign voice_mode from settings
+function setupVoice(settings: UserSettings) {
   const { key_binding } = settings;
 
-  if ((voice_mode === 'push_to_talk' || voice_mode === 'toggle_to_talk') && key_binding) {
+  if ((settings.voice_mode === 'push_to_talk' || settings.voice_mode === 'toggle_to_talk') && key_binding) {
     gkl = new GlobalKeyboardListener();
 
     gkl.addListener((e) => {
       if (e.name?.toLowerCase() === key_binding.toLowerCase()) {
         if (e.state === 'DOWN') {
-          if (voice_mode === 'push_to_talk') {
+          if (settings.voice_mode === 'push_to_talk') {
             isKeyDown = true;
             console.log('Push-to-talk key down:', isKeyDown);
-          } else if (voice_mode === 'toggle_to_talk') {
+          } else if (settings.voice_mode === 'toggle_to_talk') {
             isToggleToTalkActive = !isToggleToTalkActive;
             console.log('Toggle-to-talk active:', isToggleToTalkActive);
           }
-        } else if (e.state === 'UP' && voice_mode === 'push_to_talk') {
+        } else if (e.state === 'UP' && settings.voice_mode === 'push_to_talk') {
           isKeyDown = false;
           console.log('Push-to-talk key up:', isKeyDown);
         }
@@ -40,78 +46,6 @@ let agentProcesses: AgentProcess[] = [];
     });
   }
 }
-
-function startServer() {
-  logToFile("Starting server...");
-  if (!userDataDir || !fs.existsSync(userDataDir)) {
-    throw new Error("userDataDir must be provided and must exist");
-  }
-
-  let settings: ServerSideUserSettings;
-  let transcriptBuffer = "";
-
-  wss.on("connection", (ws) => {
-    logToFile("socket: client connected");
-    // Update settings
-    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    voice_mode = settings.voice_mode;
-    const deepgramClient: DeepgramFacade = settings.use_own_deepgram_api_key && settings.deepgram_api_key ? new DeepgramLocal(settings) : new DeepgramProxy(settings);
-    setupVoice(settings);
-
-    deepgramClient.on('connect', () => {
-      logToFile(`proxy: connected to ${WSS_BACKEND_URL}`);
-    });
-
-    deepgramClient.on('transcript', (data) => {
-      // console.log(`Voice Mode: ${settings.voice_mode}, isKeyDown: ${isKeyDown}, isToggleToTalkActive: ${isToggleToTalkActive}`);
-      if (voice_mode === 'always_on' ||
-        (voice_mode === 'push_to_talk' && isKeyDown) ||
-        (voice_mode === 'toggle_to_talk' && isToggleToTalkActive)) {
-
-        const { is_final, speech_final, transcript } = data || {};
-
-        if (is_final) {
-          transcriptBuffer += transcript;
-        }
-
-        if (speech_final) {
-          ws.send(transcriptBuffer); // to frontend
-          agentProcesses.forEach(agentProcess => {
-            agentProcess.sendTranscription(transcriptBuffer);
-          });
-          transcriptBuffer = "";
-        }
-      } else {
-        ws.send("Voice Disabled");
-      }
-    });
-
-    deepgramClient.on('close', () => {
-      logToFile(`proxy: connection to ${WSS_BACKEND_URL} closed`);
-      ws.close();
-    });
-
-    deepgramClient.on('error', (error) => {
-      logToFile(`proxy: error ${error}`);
-      ws.close();
-    });
-
-    ws.on("message", (message, isBinary) => {
-      if (isBinary) {
-        deepgramClient.send(message);
-      } else {
-        logToFile(`WebSocket - received wacky weird data that isn't binary: ${message}`);
-      }
-    });
-
-    ws.on("close", () => {
-      logToFile("socket: client disconnected");
-      deepgramClient.close();
-    });
-
-    deepgramClient.connect();
-  });
-} */
 
 async function proxyAlive() {
   try {
@@ -258,6 +192,76 @@ async function minecraftAlive(_: Electron.IpcMainInvokeEvent, host: string, port
   }
 }
 
+async function voiceStart(_: Electron.IpcMainInvokeEvent) {
+  if (voiceStarted) return false;
+
+  const settings = await getUserSettings();
+  let transcriptBuffer = "";
+  deepgramClient = settings.use_own_deepgram_api_key && settings.deepgram_api_key ? new DeepgramLocal(settings) : new DeepgramProxy(settings);
+  setupVoice(settings);
+
+  deepgramClient.on('connect', () => {
+    logToFile(`Deepgram Client: Connected`);
+  });
+
+  deepgramClient.on('transcript', (data) => {
+    if (settings.voice_mode === 'always_on' ||
+      (settings.voice_mode === 'push_to_talk' && isKeyDown) ||
+      (settings.voice_mode === 'toggle_to_talk' && isToggleToTalkActive)) {
+
+      const { is_final, speech_final, transcript } = data || {};
+
+      if (is_final) {
+        transcriptBuffer += transcript;
+      }
+
+      if (speech_final) {
+        //ws.send(transcriptBuffer); // to frontend
+        agentProcesses.forEach(agentProcess => {
+          agentProcess.sendTranscription(transcriptBuffer);
+        });
+        transcriptBuffer = "";
+      }
+    } else {
+      //ws.send("Voice Disabled");
+    }
+  });
+
+  deepgramClient.on('close', () => {
+    logToFile(`Deepgram Client: Connection closed`);
+  });
+
+  deepgramClient.on('error', (error) => {
+    logToFile(`eepgram Client: Error ${error}`);
+  });
+
+  deepgramClient.connect();
+
+  voiceStarted = true;
+  return true;
+}
+
+function voiceStop() {
+  if (!voiceStarted) return false;
+
+  if (gkl) {
+    gkl.kill();
+    gkl = undefined;
+  }
+
+  if (deepgramClient) {
+    deepgramClient.close();
+  }
+
+  voiceStarted = false;
+}
+
+function voiceVoiceChunk(_: Electron.IpcMainInvokeEvent, chunk: ArrayBuffer) {
+  if (deepgramClient) {
+    deepgramClient.send(chunk);
+  }
+}
+
 export function registerHandlers(ipcMain: IpcMain) {
   ipcMain.handle("app:getSettings", appGetSettings);
   ipcMain.handle("app:saveSettings", appSaveSettings);
@@ -268,4 +272,7 @@ export function registerHandlers(ipcMain: IpcMain) {
   ipcMain.handle("bot:manualChat", botManualChat);
   ipcMain.handle("proxy:alive", proxyAlive);
   ipcMain.handle("minecraft:alive", minecraftAlive);
+  ipcMain.handle("voice:start", voiceStart);
+  ipcMain.handle("voice:stop", voiceStop);
+  ipcMain.handle("voice:voiceChunk", voiceVoiceChunk);
 }

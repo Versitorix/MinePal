@@ -49,17 +49,13 @@ export default function AudioActions() {
 
   useEffect(() => {
     if (!isMicrophoneActive) return;
-
-    const socket = new WebSocket("");
     let mediaRecorder: MediaRecorder;
-
-    socket.addEventListener("open", async () => {
-      console.log("WebSocket connection opened");
+    window.voice.start().then(async () => {
       try {
         mediaRecorder = await getDeviceMediaRecorder();
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
-            socket.send(event.data);
+        mediaRecorder.ondataavailable = async (event) => {
+          if (event.data.size > 0) {
+            window.voice.voiceChunk(await event.data.arrayBuffer());
           }
         };
 
@@ -69,29 +65,12 @@ export default function AudioActions() {
       }
     });
 
-    socket.addEventListener("message", (event) => {
-      const transcript = event.data.toString('utf8');
-      if (transcript === "Voice Disabled") {
-        setIsMicrophoneActive(false);
-      } else {
-        setIsMicrophoneActive(true);
-        if (transcript !== "") {
-          // setTranscription(transcript);
-        }
-      }
-    });
-
-    socket.addEventListener("close", () => {
-      console.log("WebSocket connection closed");
-      setIsMicrophoneActive(false); // Set microphone inactive
-    });
-
     return () => {
       if (mediaRecorder && mediaRecorder.state !== "inactive") {
         mediaRecorder.stop();
       }
 
-      socket.close();
+      window.voice.stop();
     };
   }, [getDeviceMediaRecorder, isMicrophoneActive]);
 

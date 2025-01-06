@@ -1,5 +1,4 @@
 import { createClient, DeepgramClient, ListenLiveClient, LiveTranscriptionEvents, SOCKET_STATES } from '@deepgram/sdk';
-import { RawData } from 'ws';
 import DeepgramFacade from './DeepgramFacade';
 
 export default class DeepgramLocal extends DeepgramFacade {
@@ -57,7 +56,7 @@ export default class DeepgramLocal extends DeepgramFacade {
         });
     }
 
-    send(data: RawData): void {
+    send(data: ArrayBuffer): void {
         if (!this.deepgramLiveClient) {
             console.log("socket: data couldn't be sent to deepgram");
             return;
@@ -65,7 +64,7 @@ export default class DeepgramLocal extends DeepgramFacade {
             return
         }
 
-        this.deepgramLiveClient.send(new Blob(Array.isArray(data) ? data : [data]));
+        this.deepgramLiveClient.send(data);
     }
 
     close(): void {
