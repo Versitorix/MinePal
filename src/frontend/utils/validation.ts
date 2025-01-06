@@ -1,4 +1,4 @@
-import { UserSettings } from "../../types/config";
+import { UserSettings } from "../../types/userSettings";
 
 export function isValidMinecraftUsername(username: string) {
   const regex = /^[a-zA-Z0-9_]{3,16}$/;
@@ -9,7 +9,6 @@ export function validateUserSettings({
   useOwnApiKey,
   openai_api_key,
   model,
-  profiles,
   key_binding,
   voice_mode,
   host,
@@ -23,7 +22,6 @@ export function validateUserSettings({
     if (!model) invalidFields.push("model");
   }
 
-  if (!profiles.length) invalidFields.push("profiles");
   if (!key_binding && !["always_on", "off"].includes(voice_mode)) invalidFields.push("key_binding");
   if (!host) invalidFields.push("host");
   if (!port) invalidFields.push("port");

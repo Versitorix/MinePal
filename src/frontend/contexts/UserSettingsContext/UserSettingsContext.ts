@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { UserSettings } from "../../../types/config";
+import { UserSettings } from "../../../types/userSettings";
 import defaultUserSettings from "../../utils/defaultUserSettings";
 
 type UserSettingsContextType = {

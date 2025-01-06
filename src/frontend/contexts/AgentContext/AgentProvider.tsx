@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { isValidMinecraftUsername, validateUserSettings } from "../../utils/validation";
 import { useUserSettings } from "../UserSettingsContext/UserSettingsContext";
-import { checkServerAlive, startAgent, stopAgent } from "../../utils/api";
+import { checkServerAlive, saveSettings, startAgent, stopAgent } from "../../utils/api";
 import { BotProfile } from "../../../types/botProfile";
 import { startTrackingSession, stopTrackingSession } from "../../utils/tracking";
 import { useErrorReport } from "../ErrorReportContext/ErrorReportContext";
@@ -44,10 +44,8 @@ export default function AgentProvider({ children }: React.PropsWithChildren) {
       return;
     }
     try {
-      const status = await startAgent({
-        ...userSettings,
-        profiles: selectedProfiles,
-      });
+      await saveSettings(userSettings);
+      const status = await startAgent(selectedProfiles);
       console.log("Agent started successfully:", status);
       setActive(true);
       clearError()
@@ -86,6 +84,7 @@ export default function AgentProvider({ children }: React.PropsWithChildren) {
 
   useEffect(() => {
     if (active) {
+      console.log("adawd");
       const handleBeforeUnload = () => {
         // This might not work lol, because we're an Electron app, but just gonna have this here first.
         stopTrackingSession(userSettings.player_username);

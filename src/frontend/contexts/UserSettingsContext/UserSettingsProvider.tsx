@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchSettings } from '../../utils/api';
+import { getSettings } from '../../utils/api';
 import useWebRequest from '../../hooks/useWebRequest';
-import { UserSettings } from '../../../types/config';
+import { UserSettings } from '../../../types/userSettings';
 import defaultUserSettings from '../../utils/defaultUserSettings';
 import { UserSettingsContext } from './UserSettingsContext';
 
 export default function UserSettingsProvider({ children }: React.PropsWithChildren) {
-  const { data } = useWebRequest("settings", fetchSettings);
+  const { data } = useWebRequest("settings", getSettings);
   const [userSettings, setSettings] = useState<UserSettings>({ ...defaultUserSettings });
 
   const updateField = useCallback((key: keyof UserSettings, value: unknown) => {

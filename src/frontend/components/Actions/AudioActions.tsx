@@ -3,7 +3,6 @@ import { Mic } from "react-feather";
 
 import useInputDevices from "../../hooks/useInputDevices";
 import { useUserSettings } from "../../contexts/UserSettingsContext/UserSettingsContext";
-import settings from "../../utils/settings";
 import { useAgent } from "../../contexts/AgentContext/AgentContext";
 
 export default function AudioActions() {
@@ -51,7 +50,7 @@ export default function AudioActions() {
   useEffect(() => {
     if (!isMicrophoneActive) return;
 
-    const socket = new WebSocket(settings.API_BASE_WEBSOCKET_URL);
+    const socket = new WebSocket("");
     let mediaRecorder: MediaRecorder;
 
     socket.addEventListener("open", async () => {

@@ -1,5 +1,4 @@
 import { VoiceMode } from './voice';
-import { BotProfile } from './botProfile';
 import { OpenAIModel } from './openAi';
 
 export type UserSettings = {
@@ -7,7 +6,6 @@ export type UserSettings = {
   host: string;
   port: number;
   player_username: string;
-  profiles: BotProfile[];
   whisper_to_player: boolean;
   voice_mode: VoiceMode;
   key_binding: string;

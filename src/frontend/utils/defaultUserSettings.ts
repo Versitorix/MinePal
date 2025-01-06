@@ -1,11 +1,10 @@
-import { UserSettings } from "../../types/config";
+import { UserSettings } from "../../types/userSettings";
 
 const defaultUserSettings: UserSettings = {
   minecraft_version: "",
   host: "",
   port: 0,
   player_username: "",
-  profiles: [],
   whisper_to_player: false,
   voice_mode: "always_on",
   key_binding: '',

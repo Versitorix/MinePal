@@ -94,7 +94,7 @@ export class Agent {
                 "Set the weather to",
                 "Gamerule "
             ];
-            const eventname = this.settings.profiles.length > 1 ? 'whisper' : 'chat'; // Updated to use instance variable
+            const eventname = this.settings.whisper_to_player ? 'whisper' : 'chat'; // Updated to use instance variable
 
             // Set up chat event listener
             this.bot.on(eventname, (username, message) => {
@@ -390,17 +390,9 @@ export class Agent {
         this.npc.init();
 
         // Set up update loop for modes
-        const INTERVAL = 1000;
-        setTimeout(async () => {
-            while (true) {
-                let start = Date.now();
-                await this.bot.modes.update();
-                let remaining = INTERVAL - (Date.now() - start);
-                if (remaining > 0) {
-                    await new Promise((resolve) => setTimeout(resolve, remaining));
-                }
-            }
-        }, INTERVAL);
+        setInterval(async () => {
+            await this.bot.modes.update();
+        }, 1000);
 
         this.bot.emit('idle');
     }

@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { saveProfiles, sendMessage } from '../utils/api';
+import { getProfiles, saveProfiles, sendMessage } from '../utils/api';
 import { BotProfile } from '../../types/botProfile';
-import { useUserSettings } from '../contexts/UserSettingsContext/UserSettingsContext';
 import './Profiles.css';
 import { useAgent } from '../contexts/AgentContext/AgentContext';
 import { useErrorReport } from '../contexts/ErrorReportContext/ErrorReportContext';
+import useWebRequest from '../hooks/useWebRequest';
 
 function Profiles() {
-  const { userSettings: { profiles }, updateField } = useUserSettings();
+  const { data: profiles = [], refetch } = useWebRequest("profiles", getProfiles);
   const { selectedProfiles, toggleProfile } = useAgent();
   const { declareError } = useErrorReport();
 
@@ -53,7 +53,7 @@ function Profiles() {
     console.log(updatedProfiles);
     try {
       await saveProfiles(updatedProfiles);
-      updateField("profiles", updatedProfiles);
+      await refetch();
       closeModal();
     } catch (error) {
       declareError("Profiles", error);
@@ -69,7 +69,6 @@ function Profiles() {
 
     try {
       await saveProfiles(updatedProfiles);
-      updateField("profiles", updatedProfiles);
       closeModal();
     } catch (error) {
       declareError("Profiles", error);
@@ -87,7 +86,7 @@ function Profiles() {
         <div key={index} className="profile-box" onClick={() => openModal(profile, index)}>
           <input
             type="checkbox"
-            checked={selectedProfiles.includes(profile)}
+            checked={selectedProfiles.some(selectedProfile => selectedProfile.name === profile.name)}
             onChange={(e) => handleCheckboxClick(e, profile)}
             onClick={(e) => e.stopPropagation()}
           />

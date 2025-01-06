@@ -1,8 +1,8 @@
 import fs from 'fs';
 import { promisify } from 'util';
-import { app, BrowserWindow, systemPreferences } from 'electron';
+import { app, BrowserWindow, ipcMain, systemPreferences } from 'electron';
 import path from 'path';
-import { startServer } from './server';
+import { registerHandlers } from './server';
 import { createStream } from 'rotating-file-stream';
 import { autoUpdater } from 'electron-updater';
 
@@ -22,8 +22,6 @@ const copyFile = promisify(fs.copyFile);
 const mkdir = promisify(fs.mkdir);
 const access = promisify(fs.access);
 
-const DEBUG = !!process.env.DEBUG;
-
 const logDirectory = app.getPath('userData');
 const logStream = createStream('app.log', {
     size: '500K', // Rotate every 500KB
@@ -41,7 +39,7 @@ async function checkAndCopyProfile() {
 
     try {
         await access(profilesDir);
-    } catch (err) {
+    } catch {
         await mkdir(profilesDir);
         logToFile('Created profiles directory');
         // Only add ethan if there's no profile dir.
@@ -67,7 +65,7 @@ function createWindow() {
     // and load the index.html of the app.
     mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-    if (DEBUG) {
+    if (process.env.DEBUG) {
         mainWindow.webContents.openDevTools(); // Open Electron DevTools
     }
 }
@@ -85,7 +83,8 @@ if (!gotTheLock) {
         }
     });
 
-    app.on('ready', async () => {
+    app.whenReady().then(async () => {
+        registerHandlers(ipcMain);
         createWindow(); // Create the window first
         logToFile(`Platform: ${process.platform}`);
         if (process.platform === 'darwin') { // Check if the platform is macOS
@@ -98,13 +97,14 @@ if (!gotTheLock) {
                 logToFile("Failed to request microphone access: " + error);
             }
         }
-        try {
-            startServer();
-        } catch (error) {
-            logToFile("Failed to start server: " + error);
-        }
         await checkAndCopyProfile(); // Check and copy profile
         autoUpdater.checkForUpdatesAndNotify();
+
+        app.on('activate', function () {
+            if (BrowserWindow.getAllWindows().length === 0) {
+                createWindow();
+            }
+        });
     });
 
     autoUpdater.on('error', (err) => {
@@ -133,11 +133,5 @@ if (!gotTheLock) {
 app.on('window-all-closed', function () {
     if (process.platform !== 'darwin') {
         app.quit();
-    }
-});
-
-app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
     }
 });
