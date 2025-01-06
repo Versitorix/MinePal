@@ -6,7 +6,10 @@ import { ServerSideUserSettings } from "../types/userSettings";
 const settingsPath = `${app.getPath('userData')}/settings.json`;
 
 export async function getUserSettings(): Promise<ServerSideUserSettings> {
-  if (!(await fs.stat(settingsPath)).isFile()) {
+  try {
+    await fs.access(settingsPath, fs.constants.R_OK)
+    return JSON.parse(await fs.readFile(settingsPath, 'utf8'));
+  } catch {
     return {
       minecraft_version: "1.20.4",
       host: "localhost",
@@ -26,8 +29,6 @@ export async function getUserSettings(): Promise<ServerSideUserSettings> {
       use_own_deepgram_api_key: false,
     };
   }
-
-  return JSON.parse(await fs.readFile(settingsPath, 'utf8'));
 }
 
 export async function updateUserSettings(updatedSettings: ServerSideUserSettings) {
